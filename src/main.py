@@ -149,12 +149,28 @@ def load(path):
     index = Index(datastore_urlToDid, datastore_wordToDids)
     return index
 
+# Function that return a list reduce with occ number and by giving a list
+def my_map_reduce(data):
+
+    data_reduce = []
+    data_reduce_key = []
+    
+    for elm in data:
+        occ = 0
+        if elm not in data_reduce_key:
+            data_reduce_key.append(elm)
+            for elm_inner in data:
+                if elm == elm_inner:
+                    occ += 1
+            data_reduce.append((elm, occ))
+
+    return data_reduce, data_reduce_key
+
 # Function that search urls associated to a word
 def search(word, index_l):
     try:
         ids = index_l.wordToDids[word]
     except:
-        print("This word doesn't exist on our word base, please try another.")
         return []
 
     urlToDid_dict = index_l.urlToDid
@@ -164,6 +180,16 @@ def search(word, index_l):
         urls.append(url)
 
     return urls
+
+# Function that search for several words
+def searchOR(words, index_l):
+    urls = []
+
+    for word in words:
+        print(word)
+        urls += search(word, index_l)
+    
+    return my_map_reduce(urls)[1]
 
 def main():
         
@@ -207,20 +233,53 @@ def main():
     index_l = load(path_index)
 
     # Searching user input words
-    word = input("\nPlease enter a word (-quit to exit): ")
-    while word not in ["-Quit", "-quit", "-exit", "-stop"]:
-        print ("You entered the word " + bcolors.OKBLUE + str(word) + bcolors.ENDC + ".")
+    while "quit option doesn't chosen":
+        print("\nPlease enter one of these following options:")
+        print(bcolors.OKBLUE + "\t-search" + bcolors.ENDC + "\t launch searcher for one word")
+        print(bcolors.OKBLUE + "\t-or" + bcolors.ENDC + "\t launch or searcher for several words")
+        print(bcolors.OKBLUE + "\t-and" + bcolors.ENDC + "\t launch and searcher for several words")
+        print(bcolors.OKBLUE + "\t-quit" + bcolors.ENDC + "\t exit the program")
 
-        for processor in processors_list:
-            word = processor.process(word)
+        option = input("\n> ")
+        
+        if option in ["-q", "-Quit", "-quit", "-exit", "-stop"]:
+            break;
 
-        urls = search(word, index_l)
-        if urls:
-            print("This word appears on these texts: ")            
-            print(urls)
+        if option in ["-s", "s", "-search", "search"]:
+            while "quit option doesn't chosen":
+                print("\nPlease enter a word, or -quit to change option:")
+                word = input("\n> ")
+                if word in ["-q", "-Quit", "-quit", "-exit", "-stop"]:
+                    print("You left the -search option.")
+                    break
+                else:
+                    for processor in processors_list:
+                        word = processor.process(word)
+                    urls = search(word, index_l)
+                    if urls:
+                        print("\nThe word " + bcolors.OKBLUE + str(word) + bcolors.ENDC + " appears on these texts: ")
+                        print(urls)
+                    else:
+                        print("\nThe word " + bcolors.OKBLUE + str(word) + bcolors.ENDC + " doesn't appears on our texts base, please try another.")
 
-        word = input("\nPlease enter a word (-quit to exit): ")
-    
+        if option in ["-or", "or"]:
+            while "quit option doesn't chosen":
+                print("\nPlease enter some words, or -quit to change option:")
+                words = input("\n> ")
+                if words in ["-q", "-Quit", "-quit", "-exit", "-stop"]:
+                    print("You left the -search option.")
+                    break
+                else:
+                    words = text_to_word(words)                
+                    for processor in processors_list:
+                        words = [processor.process(word) for word in words]
+                    urls = searchOR(words, index_l)
+                    if urls:
+                        print("\nThe words " + bcolors.OKBLUE + "{}".format(words) + bcolors.ENDC + " appears on these texts: ")
+                        print(urls)
+                    else:
+                        print("\nThe words " + bcolors.OKBLUE + "{}".format(words) + bcolors.ENDC + " doesn't appears on our texts base, please try another.")
+
     print("\nThanks for use!\n")
 
 
