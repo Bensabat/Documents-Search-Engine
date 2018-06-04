@@ -186,10 +186,21 @@ def searchOR(words, index_l):
     urls = []
 
     for word in words:
-        print(word)
         urls += search(word, index_l)
+
+    return my_map_reduce(urls)
+
+# Function that search for several words
+def searchAND(words, index_l):
+    urls = searchOR(words, index_l)[0]
+    and_len = len(words)
+
+    and_urls = []
+    for elm in urls:
+        if elm[1] == and_len:
+            and_urls.append(elm[0])
     
-    return my_map_reduce(urls)[1]
+    return and_urls
 
 def main():
         
@@ -262,18 +273,21 @@ def main():
                     else:
                         print("\nThe word " + bcolors.OKBLUE + str(word) + bcolors.ENDC + " doesn't appears on our texts base, please try another.")
 
-        if option in ["-or", "or"]:
+        if option in ["-or", "or", "-and", "and"]:
             while "quit option doesn't chosen":
                 print("\nPlease enter some words, or -quit to change option:")
                 words = input("\n> ")
                 if words in ["-q", "-Quit", "-quit", "-exit", "-stop"]:
-                    print("You left the -search option.")
+                    print("You left the {} option.".format(option))
                     break
                 else:
-                    words = text_to_word(words)                
+                    words = text_to_word(words)
                     for processor in processors_list:
                         words = [processor.process(word) for word in words]
-                    urls = searchOR(words, index_l)
+                    if option in ["-or", "or"]:
+                        urls = searchOR(words, index_l)[1]
+                    else: # And option
+                        urls = searchAND(words, index_l)
                     if urls:
                         print("\nThe words " + bcolors.OKBLUE + "{}".format(words) + bcolors.ENDC + " appears on these texts: ")
                         print(urls)
